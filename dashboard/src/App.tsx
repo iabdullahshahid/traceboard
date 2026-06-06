@@ -80,12 +80,11 @@ export default function App() {
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">T</span>
-                </div>
-                <h1 className="text-base font-semibold tracking-tight">
-                  traceboard
-                </h1>
+                <img
+                  src={`${import.meta.env.BASE_URL}images/logo.png`}
+                  alt="traceboard"
+                  className="h-9 w-auto"
+                />
               </div>
 
               <div className="flex items-center gap-1.5 ml-2">

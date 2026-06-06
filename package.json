@@ -23,6 +23,7 @@
     "build:dashboard": "cd dashboard && npm install && npm run build",
     "dev": "npm run build:server && node dist/cli.js",
     "dev:dashboard": "cd dashboard && npm run dev",
+    "demo": "npm run build:server && node examples/demo.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
