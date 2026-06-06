@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/utils.ts","./src/vite-env.d.ts","./src/components/detaildrawer.tsx","./src/components/endpointbadge.tsx","./src/components/filterbar.tsx","./src/components/logrow.tsx","./src/components/timeline.tsx","./src/hooks/usesocket.ts"],"version":"5.9.3"}

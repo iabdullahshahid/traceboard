@@ -1,0 +1,50 @@
+{
+  "name": "traceboard",
+  "version": "0.1.0",
+  "description": "Lightweight local developer debugging dashboard with realtime trace logs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "traceboard": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run build:server && npm run build:dashboard",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:dashboard": "cd dashboard && npm install && npm run build",
+    "dev": "npm run build:server && node dist/cli.js",
+    "dev:dashboard": "cd dashboard && npm run dev",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "debug",
+    "trace",
+    "logging",
+    "developer-tools",
+    "dashboard"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "open": "^10.1.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: #ffffff;
+  --surface-elevated: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --border: #e2e8f0;
+  --muted: #64748b;
+  --accent: #6366f1;
+  --accent-muted: #eef2ff;
+  --text: #0f172a;
+  --text-secondary: #475569;
+}
+
+.dark {
+  --surface: #0f1117;
+  --surface-elevated: #161822;
+  --surface-hover: #1e2130;
+  --border: #2a2d3a;
+  --muted: #8b8fa3;
+  --accent: #818cf8;
+  --accent-muted: #1e1b4b;
+  --text: #e2e8f0;
+  --text-secondary: #94a3b8;
+}
+
+body {
+  @apply bg-[var(--surface)] text-[var(--text)] font-sans antialiased;
+  margin: 0;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+@keyframes log-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.log-enter {
+  animation: log-enter 0.2s ease-out;
+}
+
+@layer components {
+  .container {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+}
