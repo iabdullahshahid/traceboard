@@ -4,12 +4,16 @@ on:
   release:
     types: [published]
 
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write   # for npm provenance (optional but recommended)
+      id-token: write # required for npm provenance
 
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +22,16 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Verify release tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::Release tag '$GITHUB_REF_NAME' (version '$TAG') does not match package.json version '$VERSION'"
+            exit 1
+          fi
+          echo "Publishing traceboard@$VERSION"
 
       - name: Install root dependencies
         run: npm ci
@@ -30,6 +44,6 @@ jobs:
         run: npm run build
 
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --provenance --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

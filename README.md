@@ -29,20 +29,24 @@
 
 ## Installation
 
+traceboard has two parts:
+
+1. **Dashboard** — a local server + browser UI (run separately)
+2. **SDK** — import `trace` in your Node.js app to send logs
+
+You install the package **once in your project**. The dashboard runs alongside your app during development.
+
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) **18** or later
-- npm, yarn, or pnpm
 
-### Install the package
+### Step 1 — Add traceboard to your project
 
-Add traceboard to your project:
+In your existing Node.js app:
 
 ```bash
 npm install traceboard
 ```
-
-Or with other package managers:
 
 ```bash
 yarn add traceboard
@@ -52,74 +56,100 @@ yarn add traceboard
 pnpm add traceboard
 ```
 
-### Start the dashboard
+### Step 2 — Start the dashboard
 
-Open a terminal and run:
+Open a **separate terminal** and run:
 
 ```bash
 npx traceboard
 ```
 
-This starts the local server and opens the dashboard at **http://localhost:4287**.
+This starts the dashboard at **http://localhost:4287** and opens it in your browser. Keep this terminal running while you develop.
 
-To install the CLI globally:
+Alternatively, install the CLI globally:
 
 ```bash
 npm install -g traceboard
 traceboard
 ```
 
-### Try the demo (optional)
+### Step 3 — Import and log from your app
 
-Clone the repo and run the included demo to populate the dashboard with sample data:
+In your project code, import `trace` and start logging. Logs stream to the dashboard in realtime — nothing prints to your terminal.
+
+**ESM:**
+
+```ts
+import { trace } from "traceboard";
+
+trace.info("Server started", { port: 3000 });
+```
+
+**CommonJS:**
+
+```js
+const { trace } = require("traceboard");
+
+trace.info("Server started", { port: 3000 });
+```
+
+### Step 4 — Run your app
+
+Start your app as you normally would:
 
 ```bash
-git clone https://github.com/iabdullahshahid/traceboard.git
-cd traceboard
-npm install
-cp .env.example .env
-npx traceboard          # Terminal 1
-npm run demo            # Terminal 2
+node server.js
+# or
+npm run dev
 ```
+
+Open **http://localhost:4287** and your logs appear live.
+
+### Example: Express API
+
+```ts
+import express from "express";
+import { trace } from "traceboard";
+
+const app = express();
+
+app.get("/api/users", async (req, res) => {
+  const t = trace.group("GET /api/users");
+
+  t.info("Request received", { method: "GET", path: "/api/users" });
+
+  const users = await fetchUsers();
+
+  t.success("Users returned", {
+    method: "GET",
+    path: "/api/users",
+    status: 200,
+    count: users.length,
+  });
+
+  res.json(users);
+});
+
+app.listen(3000, () => {
+  trace.info("Server listening", { port: 3000 });
+});
+```
+
+> **Note:** If the dashboard is not running, your app continues normally — logs are silently dropped. The SDK never throws or crashes your app.
 
 ---
 
 ## Usage
 
-Import `trace` in your Node.js app. Logs stream to the dashboard in realtime — nothing is printed to your terminal.
-
-### ESM (recommended)
-
-```ts
-import { trace } from "traceboard";
-```
-
-### CommonJS
-
-```js
-const { trace } = require("traceboard");
-```
-
----
-
-### 1. Log levels
-
-traceboard supports four log levels. Each appears with a distinct color in the dashboard.
+### Log levels
 
 ```ts
 import { trace } from "traceboard";
 
-// General information
-trace.info("Server listening", { port: 3000 });
-
-// Successful operations
-trace.success("User created", { userId: "usr_8k2m9x" });
-
-// Non-fatal issues
-trace.warning("Rate limit approaching", { remaining: 5 });
-
-// Failures and exceptions
-trace.error("Payment declined", { code: "CARD_DECLINED" });
+trace.info("Processing request");
+trace.success("Request completed", { status: 200 });
+trace.warning("Deprecated API used", { endpoint: "/v1/users" });
+trace.error("Database connection failed", { code: "ECONNREFUSED" });
 ```
 
 | Method | Type | Use for |
@@ -131,9 +161,7 @@ trace.error("Payment declined", { code: "CARD_DECLINED" });
 
 ---
 
-### 2. Message only
-
-Logs accept just a message — no data payload required.
+### Message only
 
 ```ts
 trace.info("Application started");
@@ -144,9 +172,9 @@ trace.error("Connection refused");
 
 ---
 
-### 3. Message with data
+### Message with data
 
-Attach any JSON-serializable object. It appears in the detail drawer when you click a log entry.
+Attach any JSON-serializable object. Click a log in the dashboard to see the full payload in the detail drawer.
 
 ```ts
 trace.info("User loaded", {
@@ -164,9 +192,9 @@ trace.success("Order placed", {
 
 ---
 
-### 4. Trace groups
+### Trace groups
 
-Group related logs under a shared trace ID. Ideal for auth flows, API handlers, checkout pipelines, or background jobs.
+Group related logs under a shared trace ID — ideal for auth flows, API handlers, or background jobs.
 
 ```ts
 const auth = trace.group("AUTH_FLOW");
@@ -178,7 +206,7 @@ auth.warning("Refresh token expiring soon", { remaining: 300 });
 auth.success("Session established", { userId: "usr_8k2m9x" });
 ```
 
-Nested groups are supported — call `.group()` on any logger:
+Nested groups:
 
 ```ts
 const checkout = trace.group("CHECKOUT");
@@ -191,15 +219,9 @@ checkout.success("Order confirmed", { orderId: "ord_7p4q1w" });
 
 ---
 
-### 5. HTTP / API tracing
+### HTTP / API tracing
 
-Pass `method` and `path` in the **second argument** (the data object). traceboard uses these to:
-
-- Show an **endpoint badge** on the log row (e.g. `POST /api/auth/token`)
-- Display a highlighted **API Endpoint** field when you click the log
-- Render the full **Data** JSON in the detail drawer
-
-This is exactly how the demo script logs endpoints:
+Pass `method` and `path` in the data object to show an **endpoint badge** on the log row and an **API Endpoint** field in the detail drawer when clicked.
 
 ```ts
 const auth = trace.group("AUTH_FLOW");
@@ -219,15 +241,7 @@ auth.success("JWT issued", {
 });
 ```
 
-When you click **"Exchanging authorization code"** in the dashboard, the detail drawer shows:
-
-| Field | Example value |
-|---|---|
-| Message | Exchanging authorization code |
-| API Endpoint | `POST /api/auth/token` |
-| Trace ID | `AUTH_FLOW` |
-| Source | `examples/demo.js:32` |
-| Data | Full JSON payload (see below) |
+Clicking a log in the dashboard opens the detail drawer with message, endpoint, trace ID, source file/line, and full JSON data:
 
 ```json
 {
@@ -239,8 +253,6 @@ When you click **"Exchanging authorization code"** in the dashboard, the detail 
 
 #### Supported endpoint fields
 
-traceboard detects endpoints from any of these keys in the data object:
-
 | Key | Example |
 |---|---|
 | `method` + `path` | `{ method: "GET", path: "/api/users" }` |
@@ -250,40 +262,11 @@ traceboard detects endpoints from any of these keys in the data object:
 | `httpMethod` + `path` | `{ httpMethod: "PATCH", path: "/api/profile" }` |
 | nested `request` | `{ request: { method: "GET", path: "/api/health" } }` |
 
-The badge and detail drawer display the endpoint as **`METHOD path`** (e.g. `GET /api/users`).
-
-#### More examples
-
-```ts
-trace.success("GET /api/users", {
-  method: "GET",
-  path: "/api/users",
-  status: 200,
-  durationMs: 142,
-});
-
-trace.info("Creating payment intent", {
-  method: "POST",
-  path: "/api/payments/intent",
-  amount: 149.97,
-  currency: "USD",
-});
-
-trace.error("SMTP connection failed", {
-  method: "POST",
-  path: "/api/internal/email/send",
-  status: 503,
-  retryIn: 30,
-});
-```
-
-> **Tip:** Include any extra context (`status`, `durationMs`, `query`, `userId`, etc.) in the same data object — it all appears in the **Data** panel when you click the log.
-
 ---
 
-### 6. Errors and complex objects
+### Errors and complex objects
 
-Errors, circular references, functions, and bigints are serialized safely — the SDK never crashes your app.
+Errors, circular references, functions, and bigints are serialized safely.
 
 ```ts
 try {
@@ -299,41 +282,11 @@ try {
 
 ---
 
-### Full example
-
-```ts
-import { trace } from "traceboard";
-
-trace.info("Application started", { env: "development", version: "1.0.0" });
-
-const api = trace.group("GET /api/users");
-
-api.info("Cache miss — fetching from database");
-api.info("Query executed", {
-  method: "GET",
-  path: "/api/users",
-  query: { page: 1, limit: 20 },
-});
-api.success("Users loaded", {
-  method: "GET",
-  path: "/api/users",
-  status: 200,
-  count: 20,
-  durationMs: 142,
-});
-```
-
-> **Note:** The SDK connects lazily on the first log call. If the dashboard is not running, your app continues normally — logs are silently dropped.
-
----
-
 ## Results
-
-Run `npx traceboard` and `npm run demo` to reproduce the screenshots below.
 
 ### Groups view — timeline by trace ID
 
-Logs are grouped by trace (e.g. `AUTH_FLOW`, `CHECKOUT`, `EMAIL_QUEUE`) with a visual timeline, relative timing, and endpoint badges.
+Logs grouped by trace with a visual timeline, relative timing, and endpoint badges.
 
 <p align="center">
   <img src="./public/example/1.png" alt="traceboard Groups view showing timeline traces for EMAIL_QUEUE and CHECKOUT" width="800" />
@@ -341,7 +294,7 @@ Logs are grouped by trace (e.g. `AUTH_FLOW`, `CHECKOUT`, `EMAIL_QUEUE`) with a v
 
 ### Flat view — chronological log stream
 
-Switch to **Flat** for a single chronological list with trace IDs, source file locations, and filterable log levels.
+A single chronological list with trace IDs, source file locations, and filterable log levels.
 
 <p align="center">
   <img src="./public/example/2.png" alt="traceboard Flat view showing chronological logs with filters and search" width="800" />
@@ -349,10 +302,10 @@ Switch to **Flat** for a single chronological list with trace IDs, source file l
 
 ### Detail drawer — click any log to inspect
 
-Click a log entry to open the detail drawer on the right. Endpoint logs show the **API Endpoint** field, source file/line, and the full JSON **Data** payload — matching the demo at `examples/demo.js`.
+Click a log to see the API endpoint, trace ID, source location, and full JSON payload.
 
 <p align="center">
-  <img src="./public/example/3.png" alt="traceboard detail drawer showing API endpoint, trace ID, source, and JSON data for an auth token exchange log" width="800" />
+  <img src="./public/example/3.png" alt="traceboard detail drawer showing API endpoint, trace ID, source, and JSON data" width="800" />
 </p>
 
 ---
@@ -364,17 +317,19 @@ Click a log entry to open the detail drawer on the right. Endpoint logs show the
 | `TRACEBOARD_PORT` | `4287` | Port the dashboard server listens on |
 | `TRACEBOARD_HOST` | `http://localhost` | Host the SDK connects to |
 
+Change the dashboard port:
+
 ```bash
 TRACEBOARD_PORT=5000 npx traceboard
 ```
 
+Point your app at a custom host/port:
+
 ```bash
-TRACEBOARD_PORT=5000 TRACEBOARD_HOST=http://localhost node your-app.js
+TRACEBOARD_PORT=5000 TRACEBOARD_HOST=http://localhost node server.js
 ```
 
 ### Log entry shape
-
-Every log sent to the dashboard includes:
 
 ```ts
 {
@@ -392,7 +347,7 @@ Every log sent to the dashboard includes:
 
 ## Contributing
 
-Contributions are welcome. Please follow these steps:
+Contributions are welcome.
 
 ### 1. Fork and clone
 
@@ -413,20 +368,11 @@ git checkout -b feat/your-feature
 
 - **Server / SDK** — `src/`
 - **Dashboard UI** — `dashboard/src/`
-- **Demo script** — `examples/demo.js`
 
 ### 4. Build and verify
 
 ```bash
 npm run build
-```
-
-Run the dashboard and demo to confirm everything works:
-
-```bash
-cp .env.example .env
-npx traceboard          # Terminal 1
-npm run demo            # Terminal 2
 ```
 
 For dashboard UI development with hot reload:
@@ -441,7 +387,7 @@ npm run dev             # Terminal 2 — server on :4287
 1. Push your branch to your fork
 2. Open a PR against `main` on [iabdullahshahid/traceboard](https://github.com/iabdullahshahid/traceboard)
 3. Describe what changed and why
-4. Ensure CI passes (build workflow runs on every PR)
+4. Ensure CI passes
 
 ### Guidelines
 
@@ -452,7 +398,7 @@ npm run dev             # Terminal 2 — server on :4287
 
 ### Reporting issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/iabdullahshahid/traceboard/issues) with steps to reproduce or a clear description of the proposed change.
+[Open an issue](https://github.com/iabdullahshahid/traceboard/issues) with steps to reproduce or a clear description of the proposed change.
 
 ---
 
