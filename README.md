@@ -113,6 +113,13 @@ import { trace } from "traceboard";
 
 const app = express();
 
+async function fetchUsers() {
+  return [
+    { id: 1, name: "Alice" },
+    { id: 2, name: "Bob" },
+  ];
+}
+
 app.get("/api/users", async (req, res) => {
   const t = trace.group("GET /api/users");
 
@@ -131,8 +138,10 @@ app.get("/api/users", async (req, res) => {
 });
 
 app.listen(3000, () => {
+  console.log("API server running at http://localhost:3000");
   trace.info("Server listening", { port: 3000 });
 });
+
 ```
 
 > **Note:** If the dashboard is not running, your app continues normally — logs are silently dropped. The SDK never throws or crashes your app.
